@@ -12,7 +12,9 @@ use cgmath::Vector3;
 
 use std::sync::Arc;
 
-use tracer::types::{Camera, Color, Light, Material, Plane, Scene, Sphere, Surface};
+use tracer::types::{Camera, Color, Light, Material, Scene, Surface};
+
+use tracer::traceable::shapes;
 
 const WINDOW_WIDTH: u32 = 800;
 const WINDOW_HEIGHT: u32 = 600;
@@ -43,7 +45,7 @@ fn main() {
         .unwrap();
 
     let surface = Arc::new(Surface::new(WINDOW_WIDTH as usize, WINDOW_HEIGHT as usize));
-    let mut camera = Camera::new(Vector3::new(0.0, 0.0, 0.0), 90_f32);
+    let mut camera = Camera::new(Vector3::new(0.0, 0.0, 0.0), 120_f32);
     camera.set_surface(Arc::clone(&surface));
 
     let mut event_pump = sdl.event_pump().unwrap();
@@ -82,12 +84,13 @@ fn main() {
 
     #[rustfmt::skip]
     scene
-        .add_object(Box::new(Sphere::new( Vector3::new(-1.0, -1.5, -22.0), 2.0, ivory)))
-        .add_object(Box::new(Sphere::new( Vector3::new(1.5, -0.5, -25.0), 2.0, rubber)))
-        .add_object(Box::new(Sphere::new( Vector3::new(1.5, -0.5, -25.0), 2000.0, rubber)))
-        .add_object(Box::new(Sphere::new( Vector3::new(-6.0, 4.5, -30.0), 4.0, mirror)))
-        .add_object(Box::new(Sphere::new( Vector3::new(2.0, 0.0, -15.0), 1.0, glass)))
-        .add_object(Box::new(Plane::new(  Vector3::new(0.0, -5.0, 0.0), Vector3::new(0.0, 1.0, 0.0), rubber)))
+        .add_object(Box::new(shapes::Sphere::new( Vector3::new(-1.0, -1.5, -22.0), 2.0, ivory)))
+        .add_object(Box::new(shapes::Sphere::new( Vector3::new(1.5, -0.5, -25.0), 2.0, rubber)))
+        // .add_object(Box::new(Sphere::new( Vector3::new(1.5, -0.5, -25.0), 2000.0, rubber)))
+        .add_object(Box::new(shapes::Sphere::new( Vector3::new(-6.0, 4.5, -30.0), 4.0, mirror)))
+        .add_object(Box::new(shapes::Sphere::new( Vector3::new(2.0, 0.0, -15.0), 1.0, glass)))
+        .add_object(Box::new(shapes::Disk::new(  Vector3::new(0.0, 15.0, -30.0), Vector3::new(0.0, -1.0, 1.0), 10.0, mirror)))
+        // .add_object(Box::new(Plane::new(  Vector3::new(0.0, 15.0, -100.0), Vector3::new(0.0, -1.0, 1.0), mirror)))
 
         .add_light(Box::new(Light::new(Vector3::new(30.0, 50.0, -25.0), 1.8)))
         .add_light(Box::new(Light::new(Vector3::new(-20.0, 20.0, 20.0), 1.5)))

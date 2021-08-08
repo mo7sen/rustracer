@@ -40,6 +40,9 @@ A toy raytracer built in rust.
 
   ![](doc/img/10%20-%20Planes.png)
 
+- [x] Disks
+  ![](doc/img/11%20-%20Disks.png)
+
   ### Showcase
 
 ![](doc/img/Showcase.png)

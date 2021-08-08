@@ -1,11 +1,14 @@
+mod material;
+pub mod traceable;
+
 pub mod types {
+    pub use super::material::Material as Material;
+    pub use super::material::Color as Color;
+    use super::traceable::Traceable;
+
     use cgmath::dot;
     use cgmath::prelude::*;
     use cgmath::Vector3;
-
-    pub trait Traceable {
-        fn ray_intersect(&self, ray: &Ray) -> Option<RayHit>;
-    }
 
     pub trait Illumine {
         fn get_direction(&self, at: Vector3<f32>) -> Vector3<f32>;
@@ -13,20 +16,20 @@ pub mod types {
         fn get_intensity(&self) -> f32;
     }
 
-    pub struct RayHit<'a> {
+    pub struct RayHit {
         pub distance: f32,
         pub hit: Vector3<f32>,
         pub normal: Vector3<f32>,
-        pub material: &'a Material,
+        pub material: Material,
     }
 
-    impl<'a> Default for RayHit<'a> {
+    impl Default for RayHit {
         fn default() -> Self {
             Self {
                 distance: f32::MAX,
                 hit: Vector3::zero(),
                 normal: Vector3::zero(),
-                material: &MATERIAL_DEFAULT,
+                material: Material::default(),
             }
         }
     }
@@ -58,7 +61,7 @@ pub mod types {
     }
 
     pub struct Scene {
-        objects: Vec<Box<dyn Traceable>>,
+        objects: Vec<Box<dyn super::traceable::Traceable>>,
         lights: Vec<Box<dyn Illumine>>,
     }
 
@@ -72,7 +75,7 @@ pub mod types {
             }
         }
 
-        pub fn add_object(&mut self, object: Box<dyn Traceable>) -> &mut Self {
+        pub fn add_object(&mut self, object: Box<dyn super::traceable::Traceable>) -> &mut Self {
             self.objects.push(object);
             self
         }
@@ -84,7 +87,7 @@ pub mod types {
     }
 
     impl Traceable for Scene {
-        fn ray_intersect(&self, ray: &Ray) -> std::option::Option<RayHit<'_>> {
+        fn ray_intersect(&self, ray: &Ray) -> std::option::Option<RayHit> {
             let mut hit_res = RayHit::default();
             hit_res.distance = f32::MAX;
             let mut found = false;
@@ -104,115 +107,6 @@ pub mod types {
         }
     }
 
-    #[derive(Clone, Copy)]
-    pub struct Color {
-        pub r: u8,
-        pub g: u8,
-        pub b: u8,
-        pub a: u8,
-    }
-
-    impl Color {
-        pub fn RGB(r: u8, g: u8, b: u8) -> Self {
-            Self { r, g, b, a: 255 }
-        }
-        pub fn RGBA(r: u8, g: u8, b: u8, a: u8) -> Self {
-            Self { r, g, b, a }
-        }
-    }
-
-    impl Default for Color {
-        fn default() -> Self {
-            Self {
-                r: 0,
-                g: 0,
-                b: 0,
-                a: 255,
-            }
-        }
-    }
-
-    impl std::ops::Add<Color> for Color {
-        type Output = Color;
-        fn add(self, other: Color) -> <Self as std::ops::Add<Color>>::Output {
-            Color::RGB(
-                (self.r as u16 + other.r as u16).min(255).max(0) as u8,
-                (self.g as u16 + other.g as u16).min(255).max(0) as u8,
-                (self.b as u16 + other.b as u16).min(255).max(0) as u8,
-            )
-        }
-    }
-
-    impl std::ops::Mul<f32> for Color {
-        type Output = Color;
-        fn mul(self, scale: f32) -> <Self as std::ops::Mul<f32>>::Output {
-            let new_r = self.r as f32 * scale;
-            let new_g = self.g as f32 * scale;
-            let new_b = self.b as f32 * scale;
-
-            let mut color_scale: f32 = 1.0;
-            let max_cmp = new_r.max(new_g.max(new_b));
-            if max_cmp > 255.0 {
-                color_scale = 255.0 / max_cmp;
-            }
-
-            Color {
-                r: (new_r * color_scale) as u8,
-                g: (new_g * color_scale) as u8,
-                b: (new_b * color_scale) as u8,
-                a: 255,
-            }
-        }
-    }
-
-    #[derive(Clone, Copy, Default)]
-    pub struct Material {
-        pub base_color: Color,
-        pub diffuse_reflection: f32,
-        pub specular_reflection: f32,
-        pub specular_exp: f32,
-        pub reflectiveness: f32,
-        pub refractiveness: f32,
-        pub refractive_index: f32,
-    }
-
-    const MATERIAL_DEFAULT: Material = Material {
-        base_color: Color {
-            r: 0,
-            g: 0,
-            b: 0,
-            a: 255,
-        },
-        diffuse_reflection: 1_f32,
-        specular_reflection: 0_f32,
-        specular_exp: 0_f32,
-        reflectiveness: 0_f32,
-        refractiveness: 0_f32,
-        refractive_index: 1_f32,
-    };
-
-    impl Material {
-        pub fn new(
-            color: Color,
-            diffuse_reflection: f32,
-            specular_reflection: f32,
-            specular_exp: f32,
-            reflectiveness: f32,
-            refractiveness: f32,
-            refractive_index: f32,
-        ) -> Self {
-            Self {
-                base_color: color,
-                diffuse_reflection,
-                specular_reflection,
-                specular_exp,
-                reflectiveness,
-                refractiveness,
-                refractive_index,
-            }
-        }
-    }
-
     pub struct Ray {
         pub origin: Vector3<f32>,
         pub direction: Vector3<f32>,
@@ -221,101 +115,6 @@ pub mod types {
     impl Ray {
         pub fn new(origin: Vector3<f32>, direction: Vector3<f32>) -> Result<Self, String> {
             Ok(Self { origin, direction })
-        }
-    }
-
-    pub struct Sphere {
-        pub center: Vector3<f32>,
-        pub radius: f32,
-        pub material: Material,
-    }
-
-    impl Sphere {
-        pub fn new(center: Vector3<f32>, radius: f32, material: Material) -> Self {
-            Self {
-                center,
-                radius,
-                material,
-            }
-        }
-
-        pub fn set_radius(&mut self, r: f32) -> Result<(), String> {
-            self.radius = r;
-            Ok(())
-        }
-
-        pub fn set_center(&mut self, c: Vector3<f32>) -> Result<(), String> {
-            self.center = c;
-            Ok(())
-        }
-
-        pub fn set_material(&mut self, material: Material) -> Result<(), String> {
-            self.material = material;
-            Ok(())
-        }
-    }
-    impl Traceable for Sphere {
-        fn ray_intersect(&self, ray: &Ray) -> Option<RayHit> {
-            let orig2center_v3 = self.center - ray.origin;
-            let orig2pc_f: f32 = dot(orig2center_v3, ray.direction);
-            let center2pc_fsq: f32 = orig2center_v3.magnitude2() - orig2pc_f.powi(2);
-            if center2pc_fsq > self.radius.powi(2) {
-                return None;
-            }
-
-            let i02pc_f: f32 = (self.radius.powi(2) - center2pc_fsq).sqrt();
-            let mut t0: f32 = orig2pc_f - i02pc_f;
-            if t0 < 0_f32 {
-                t0 = orig2pc_f + i02pc_f;
-                if t0 < 0_f32 {
-                    return None;
-                }
-            }
-
-            let mut rayhit: RayHit = RayHit::default();
-            rayhit.distance = t0;
-            rayhit.hit = ray.origin + (ray.direction * t0);
-            rayhit.normal = (rayhit.hit - self.center).normalize();
-            rayhit.material = &self.material;
-
-            return Some(rayhit);
-        }
-    }
-
-    pub struct Plane {
-        pub position: Vector3<f32>,
-        pub normal: Vector3<f32>,
-        pub material: Material,
-    }
-
-    impl Plane {
-        pub fn new(position: Vector3<f32>, normal: Vector3<f32>, material: Material) -> Self {
-            Self {
-                position,
-                normal: normal.normalize(),
-                material,
-            }
-        }
-    }
-
-    impl Traceable for Plane {
-        fn ray_intersect(&self, ray: &Ray) -> std::option::Option<RayHit<'_>> {
-            let raydotnorm = dot(self.normal, ray.direction * -1.0);
-            if raydotnorm < 1e-6 {
-                return None;
-            }
-
-            let t = ((ray.origin - self.position).dot(self.normal)) / raydotnorm;
-            if t < 0.0 {
-                return None;
-            }
-
-            let mut rayhit: RayHit = RayHit::default();
-            rayhit.distance = t;
-            rayhit.hit = ray.origin + (ray.direction * t);
-            rayhit.normal = self.normal;
-            rayhit.material = &self.material;
-            return Some(rayhit);
         }
     }
 
@@ -421,9 +220,9 @@ pub mod types {
             }
         }
 
-        pub fn cast_ray(&self, ray: &Ray, scene: &Scene, depth: u32) -> Color {
+        pub fn cast_ray(&self, ray: &Ray, scene: &crate::tracer::types::Scene, depth: u32) -> Color {
             if depth > 0 {
-                if let Some(hit_data) = scene.ray_intersect(&ray) {
+                if let Some(hit_data) = scene.ray_intersect(ray) {
                     let view_v3 = ray.direction;
                     let mut diffuse_light_intensity = 0.0;
                     let mut specular_light_intensity = 0.0;
