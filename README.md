@@ -43,6 +43,9 @@ A toy raytracer built in rust.
 - [x] Disks
   ![](doc/img/11%20-%20Disks.png)
 
+- [x] AABB
+  ![](doc/img/12%20-%20AABB.png)
+
   ### Showcase
 
 ![](doc/img/Showcase.png)

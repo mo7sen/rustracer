@@ -33,7 +33,7 @@ impl Default for Material {
 
 impl Material {
     pub fn new(
-        color: Color,
+        base_color: Color,
         diffuse_reflection: f32,
         specular_reflection: f32,
         specular_exp: f32,
@@ -42,7 +42,7 @@ impl Material {
         refractive_index: f32,
     ) -> Self {
         Self {
-            base_color: color,
+            base_color,
             diffuse_reflection,
             specular_reflection,
             specular_exp,

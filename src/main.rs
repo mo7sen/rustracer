@@ -92,6 +92,8 @@ fn main() {
         .add_object(Box::new(shapes::Disk::new(  Vector3::new(0.0, 15.0, -30.0), Vector3::new(0.0, -1.0, 1.0), 10.0, mirror)))
         // .add_object(Box::new(Plane::new(  Vector3::new(0.0, 15.0, -100.0), Vector3::new(0.0, -1.0, 1.0), mirror)))
 
+        .add_object(Box::new(shapes::Cube::new( Vector3::new(10.0, -5.0, -9.0), Vector3::new(5.0, 5.0, -24.0), glass)))
+
         .add_light(Box::new(Light::new(Vector3::new(30.0, 50.0, -25.0), 1.8)))
         .add_light(Box::new(Light::new(Vector3::new(-20.0, 20.0, 20.0), 1.5)))
         .add_light(Box::new(Light::new(Vector3::new(30.0, 20.0, 30.0), 1.7)))
